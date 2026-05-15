@@ -89,17 +89,3 @@ voting-app/
 ├── .gitignore
 ├── LICENSE
 └── README.md
-
-
-
-
-
-
-
-
-
-
-
-
-
-
