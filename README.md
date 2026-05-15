@@ -102,12 +102,4 @@ voting-app/
 
 
 
-The final workflow supports:
 
-Automated Docker image build
-Image push to Azure Container Registry
-Kubernetes manifest update with Build ID
-Git commit back to Azure Repos
-Argo CD GitOps-based deployment to AKS
-
-This project shows how application code, Docker, CI/CD pipelines, Kubernetes manifests, and GitOps work together in an end-to-end cloud-native deployment workflow.
