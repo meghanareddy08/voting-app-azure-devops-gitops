@@ -1,0 +1,69 @@
+# Docker
+# Build and push an image to Azure Container Registry
+# https://docs.microsoft.com/azure/devops/pipelines/languages/docker
+
+trigger:
+ paths:
+   include:
+     - worker/*
+
+resources:
+- repo: self
+
+variables:
+  # Container registry service connection established during pipeline creation
+  dockerRegistryServiceConnection: 'meghanaazurecicd-acr'
+  imageRepository: 'workerapp'
+  containerRegistry: 'meghanaazurecicd.azurecr.io'
+  dockerfilePath: '$(Build.SourcesDirectory)/result/Dockerfile'
+  tag: '$(Build.BuildId)'
+
+pool:
+ name: 'AZURE AGENT 1'
+stages:
+- stage: Build
+  displayName: Build stage
+  jobs:
+  - job: Build
+    displayName: Build
+    
+    steps:
+    - task: Docker@2
+      displayName: Build an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'build'
+        Dockerfile: 'worker/Dockerfile'
+        tags: '$(tag)'
+- stage: push
+  displayName: push stage
+  jobs:
+  - job: push
+    displayName: push
+    
+    steps:
+    - task: Docker@2
+      displayName: push an image to container registry
+      inputs:
+        containerRegistry: '$(dockerRegistryServiceConnection)'
+        repository: '$(imageRepository)'
+        command: 'push'
+        Dockerfile: 'worker/Dockerfile'
+        tags: '$(tag)'
+- stage: Update
+  displayName: Update worker manifest
+  jobs:
+  - job: Update
+    displayName: Update
+    steps:
+    - script: |
+        sed -i 's/\r$//' Scripts/Updatek8Manifests.sh
+        chmod +x Scripts/Updatek8Manifests.sh
+      displayName: Fix shell script format
+
+    - task: ShellScript@2
+      displayName: Update worker Kubernetes manifest
+      inputs:
+        scriptPath: 'Scripts/Updatek8Manifests.sh'
+        args: 'worker $(imageRepository) $(tag)'
