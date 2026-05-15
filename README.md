@@ -1,65 +1,113 @@
-# Example Voting App
+# Voting App CI/CD with Azure DevOps, AKS, ACR and Argo CD
 
-A simple distributed application running across multiple Docker containers.
+## Project Overview
 
-## Getting started
+This project is based on the Docker Example Voting App. The original application contains multiple microservices built with Python, Node.js, .NET, Redis and PostgreSQL.
 
-Download [Docker Desktop](https://www.docker.com/products/docker-desktop) for Mac or Windows. [Docker Compose](https://docs.docker.com/compose) will be automatically installed. On Linux, make sure you have the latest version of [Compose](https://docs.docker.com/compose/install/).
+I used the Docker sample application as the base project and implemented a complete end-to-end DevOps workflow using Azure cloud services, Kubernetes and GitOps.
 
-This solution uses Python, Node.js, .NET, with Redis for messaging and Postgres for storage.
+The project demonstrates how a microservices application can be containerized, built through CI pipelines, pushed to Azure Container Registry, deployed to Azure Kubernetes Service, and continuously synced using Argo CD.
 
-Run in this directory to build and run the app:
+---
 
-```shell
-docker compose up
-```
+## What I Implemented
 
-The `vote` app will be running at [http://localhost:8080](http://localhost:8080), and the `results` will be at [http://localhost:8081](http://localhost:8081).
+- Imported the Docker sample voting application into Azure Repos
+- Created Docker-based CI pipelines for the main custom microservices
+- Built and pushed Docker images to Azure Container Registry
+- Created Kubernetes manifests for deployments and services
+- Deployed the application to Azure Kubernetes Service
+- Configured image pull secrets for pulling private ACR images
+- Created Azure DevOps CI/CD pipelines for:
+  - vote
+  - result
+  - worker
+- Created an update script to automatically update Kubernetes deployment image tags with the Azure DevOps Build ID
+- Integrated Argo CD with Azure Repos for GitOps-based continuous deployment
+- Verified application deployment through Kubernetes pods, services and UI access
 
-Alternately, if you want to run it on a [Docker Swarm](https://docs.docker.com/engine/swarm/), first make sure you have a swarm. If you don't, run:
-
-```shell
-docker swarm init
-```
-
-Once you have your swarm, in this directory run:
-
-```shell
-docker stack deploy --compose-file docker-stack.yml vote
-```
-
-## Run the app in Kubernetes
-
-The folder k8s-specifications contains the YAML specifications of the Voting App's services.
-
-Run the following command to create the deployments and services. Note it will create these resources in your current namespace (`default` if you haven't changed it.)
-
-```shell
-kubectl create -f k8s-specifications/
-```
-
-The `vote` web app is then available on port 31000 on each host of the cluster, the `result` web app is available on port 31001.
-
-To remove them, run:
-
-```shell
-kubectl delete -f k8s-specifications/
-```
+---
 
 ## Architecture
 
-![Architecture diagram](architecture.excalidraw.png)
+![Architecture](architecture.excalidraw.png)
 
-* A front-end web app in [Python](/vote) which lets you vote between two options
-* A [Redis](https://hub.docker.com/_/redis/) which collects new votes
-* A [.NET](/worker/) worker which consumes votes and stores them in…
-* A [Postgres](https://hub.docker.com/_/postgres/) database backed by a Docker volume
-* A [Node.js](/result) web app which shows the results of the voting in real time
+The application contains the following components:
 
-## Notes
+| Component | Technology | Purpose |
+|---|---|---|
+| vote | Python / Flask | Frontend where users submit votes |
+| redis | Redis | Stores incoming votes temporarily |
+| worker | .NET | Reads votes from Redis and writes them to PostgreSQL |
+| db | PostgreSQL | Stores voting results |
+| result | Node.js | Displays voting results in real time |
 
-The voting application only accepts one vote per client browser. It does not register additional votes if a vote has already been submitted from a client.
+---
 
-This isn't an example of a properly architected perfectly designed distributed app... it's just a simple
-example of the various types of pieces and languages you might see (queues, persistent data, etc), and how to
-deal with them in Docker at a basic level.
+## Repository Structure
+
+```text
+voting-app/
+│
+├── vote/
+│   ├── Dockerfile
+│   └── application source code
+│
+├── result/
+│   ├── Dockerfile
+│   └── application source code
+│
+├── worker/
+│   ├── Dockerfile
+│   └── application source code
+│
+├── k8s-specifications/
+│   ├── vote-deployment.yaml
+│   ├── vote-service.yaml
+│   ├── result-deployment.yaml
+│   ├── result-service.yaml
+│   ├── worker-deployment.yaml
+│   ├── redis-deployment.yaml
+│   ├── redis-service.yaml
+│   ├── db-deployment.yaml
+│   └── db-service.yaml
+│
+├── Pipelines/
+│   ├── vote-ci-cd.yml
+│   ├── result-ci-cd.yml
+│   └── worker-ci-cd.yml
+│
+├── Scripts/
+│   └── Updatek8Manifests.sh
+│
+├── architecture.excalidraw.png
+│
+├── docker-compose.yml
+├── docker-compose.images.yml
+├── docker-stack.yml
+├── .gitattributes
+├── .gitignore
+├── LICENSE
+└── README.md
+
+
+
+
+
+
+
+
+
+
+
+
+
+The final workflow supports:
+
+Automated Docker image build
+Image push to Azure Container Registry
+Kubernetes manifest update with Build ID
+Git commit back to Azure Repos
+Argo CD GitOps-based deployment to AKS
+
+This project shows how application code, Docker, CI/CD pipelines, Kubernetes manifests, and GitOps work together in an end-to-end cloud-native deployment workflow.
